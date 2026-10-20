@@ -1,0 +1,7 @@
+# Chainlink files you downloaded (licensed to you, don't commit them)
+data/
+# Polymarket odds fetched on first run
+cache/
+__pycache__/
+*.pyc
+.DS_Store

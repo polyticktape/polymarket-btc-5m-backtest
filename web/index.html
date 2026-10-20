@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polymarket BTC 5m Backtest</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">Polymarket BTC 5m Backtest</div>
+  <nav>
+    <a id="dataLink" href="https://polyticktape.com/?ref=bt" target="_blank" rel="noopener" data-i18n="dataBy">Data: Poly Tick Tape ↗</a>
+    <button id="lang" type="button">中文</button>
+  </nav>
+</header>
+
+<main>
+  <form id="form" class="panel" autocomplete="off">
+    <section>
+      <h2 data-i18n="range">Date range (UTC)</h2>
+      <div class="row">
+        <input type="date" name="from" required>
+        <span class="dash">–</span>
+        <input type="date" name="to" required>
+      </div>
+      <label class="check"><input type="checkbox" name="sample"> <span data-i18n="sample">Free sample hour (2026-09-20 04:00–05:00)</span></label>
+      <p id="dataInfo" class="hint"></p>
+    </section>
+
+    <section>
+      <h2><span class="num">1</span><span data-i18n="c1">Odds</span></h2>
+      <div class="row">
+        <select name="side">
+          <option value="favorite" data-i18n="favorite">Buy the favorite</option>
+          <option value="underdog" data-i18n="underdog">Buy the underdog</option>
+        </select>
+      </div>
+      <div class="row">
+        <span data-i18n="priceFrom">price</span>
+        <input type="number" name="prob_min" step="0.01" min="0" max="1">
+        <span class="dash">–</span>
+        <input type="number" name="prob_max" step="0.01" min="0" max="1">
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="num">2</span><span data-i18n="c2">BTC move vs price to beat</span></h2>
+      <div class="row">
+        <select name="move_mode">
+          <option value="with" data-i18n="with">toward my side</option>
+          <option value="against" data-i18n="against">against my side</option>
+          <option value="any" data-i18n="any">either way</option>
+        </select>
+        <select name="btc_source">
+          <option value="twap60">TWAP60</option>
+          <option value="price" data-i18n="plainPrice">Price</option>
+        </select>
+      </div>
+      <div class="row">
+        <span>$</span>
+        <input type="number" name="move_min" step="1" min="0">
+        <span class="dash">–</span>
+        <input type="number" name="move_max" step="1" min="0">
+      </div>
+      <p class="hint" data-i18n="moveHint">Max 0 = no limit.</p>
+    </section>
+
+    <section>
+      <h2><span class="num">3</span><span data-i18n="c3">Window time (seconds in)</span></h2>
+      <div class="row">
+        <input type="number" name="elapsed_min" step="1" min="0" max="299">
+        <span class="dash">–</span>
+        <input type="number" name="elapsed_max" step="1" min="0" max="299">
+        <span>s</span>
+      </div>
+    </section>
+
+    <section class="exec">
+      <div class="row">
+        <label><span data-i18n="stake">Stake $</span> <input type="number" name="stake" step="1" min="1"></label>
+        <label><span data-i18n="slip">Slippage</span> <input type="number" name="slippage_ticks" step="1" min="0"> <span data-i18n="ticks">tick</span></label>
+      </div>
+    </section>
+
+    <button id="run" type="submit" data-i18n="run">Run backtest</button>
+  </form>
+
+  <div class="out">
+    <ol id="steps" class="steps">
+      <li data-step="chainlink"><b>1</b> <span data-i18n="s1">Chainlink data</span> <em></em></li>
+      <li data-step="odds"><b>2</b> <span data-i18n="s2">Polymarket odds</span> <em></em></li>
+      <li data-step="engine"><b>3</b> <span data-i18n="s3">Backtest</span> <em></em></li>
+    </ol>
+
+    <div id="empty" class="empty" data-i18n="empty">Set the three conditions and press Run.</div>
+
+    <div id="result" hidden>
+      <div class="cards" id="cards"></div>
+      <div class="chart"><svg id="equity" viewBox="0 0 800 240" preserveAspectRatio="none"></svg></div>
+      <p class="meta" id="meta"></p>
+      <div class="tableHead">
+        <h3 data-i18n="trades">Trades</h3>
+        <button id="csv" type="button" class="ghost" data-i18n="csv">Download CSV</button>
+      </div>
+      <div class="tableWrap"><table id="table"></table></div>
+    </div>
+  </div>
+</main>
+
+<dialog id="buy">
+  <h2 data-i18n="buyTitle">Chainlink data needed</h2>
+  <p id="buyMsg"></p>
+  <p data-i18n="buyWhy">This backtest runs on per-second Chainlink BTC/USD price and TWAP60, the data Polymarket settles these rounds on. Get it from Poly Tick Tape: $2.99 for a month of history, or $5.99/month for a rolling 60 days.</p>
+  <details id="missingBox"><summary data-i18n="missing">Missing files</summary><pre id="missingList"></pre></details>
+  <div class="actions">
+    <a id="buyBtn" class="btn" href="https://polyticktape.com/pricing/?ref=bt" target="_blank" rel="noopener" data-i18n="buyBtn">Get the data</a>
+    <button id="trySample" type="button" class="ghost" data-i18n="trySample">Try the free sample hour</button>
+  </div>
+  <div class="keyBox">
+    <p data-i18n="haveKey">Already bought? Paste your API key to download into ./data:</p>
+    <div class="row">
+      <input id="key" type="password" placeholder="ptt_…" spellcheck="false">
+      <button id="dl" type="button" data-i18n="download">Download</button>
+    </div>
+    <p id="dlMsg" class="hint"></p>
+  </div>
+  <form method="dialog"><button class="close" aria-label="Close">×</button></form>
+</dialog>
+
+<script src="/app.js"></script>
+</body>
+</html>
